@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-orange: #F97316;
+  --color-bg-main: #0F1113;
+  --color-bg-header: #16181A;
+  --color-bg-app: #1A1C1E;
+  --color-bg-card: #2A2D31;
+  --color-border-dim: #2A2D31;
+  --color-border-bright: #3E4248;
+  --color-text-dim: #8E9299;
+  --color-text-main: #E0E0E0;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-main text-text-main antialiased selection:bg-brand-orange/30;
+  }
+}
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #2A2D31;
+    border-radius: 2px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #3E4248;
+  }
+}
+

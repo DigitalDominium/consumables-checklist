@@ -1,0 +1,6 @@
+{
+  "name": "Consumables Checklist",
+  "description": "A QR-powered checklist for tracking and reporting consumable discrepancies and usage.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}
