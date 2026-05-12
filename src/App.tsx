@@ -29,7 +29,6 @@ export default function App() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [history, setHistory] = useState<SubmissionData[]>([]);
 
-  // Prevents repeated QR scans from firing multiple times
   const scanLocked = useRef(false);
 
   const handleScanSuccess = (data: unknown) => {
@@ -45,7 +44,6 @@ export default function App() {
         rawValue?: string;
         getText?: () => string;
       };
-
       if (typeof result.text === 'string') {
         scannedValue = result.text;
       } else if (typeof result.rawValue === 'string') {
@@ -73,7 +71,7 @@ export default function App() {
       timestamp: new Date().toLocaleTimeString(),
     };
 
-    setHistory((prevHistory) => [submission, ...prevHistory]);
+    setHistory((prev) => [submission, ...prev]);
     setStep('success');
   };
 
@@ -95,10 +93,8 @@ export default function App() {
           <div className="w-8 h-8 bg-brand-orange rounded-sm flex items-center justify-center">
             <Package2 size={18} className="text-black" />
           </div>
-
           <h1 className="text-lg font-bold tracking-tight uppercase">
-            Consumables Audit{' '}
-            <span className="text-brand-orange">v2.4</span>
+            Consumables Audit <span className="text-brand-orange">v2.4</span>
           </h1>
         </div>
 
@@ -107,11 +103,8 @@ export default function App() {
             <span className="text-[10px] text-text-dim uppercase tracking-widest leading-none mb-1">
               Operator
             </span>
-            <span className="text-sm font-medium">
-              David Raja — WH-04
-            </span>
+            <span className="text-sm font-medium">David Raja — WH-04</span>
           </div>
-
           <div className="w-10 h-10 rounded-full bg-bg-card border border-border-bright flex items-center justify-center font-mono text-xs shadow-inner">
             DR
           </div>
@@ -119,9 +112,13 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 p-6 overflow-hidden">
-        {/* Left Column: Tracking & Status */}
-        <div className="md:col-span-4 flex flex-col gap-6 overflow-hidden">
+      {/* FIX: On mobile (single-column), main must scroll vertically so the
+          stacked panels are reachable. On md+ the columns scroll internally,
+          so overflow-hidden is kept there via md:overflow-hidden. */}
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 p-6 overflow-y-auto md:overflow-hidden">
+
+        {/* Left Column: Scanner & History */}
+        <div className="md:col-span-4 flex flex-col gap-6 md:overflow-hidden">
           <section className="bg-bg-app border border-border-dim rounded-xl p-5 flex flex-col gap-4 shadow-xl">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-semibold uppercase tracking-widest text-text-dim">
@@ -150,16 +147,12 @@ export default function App() {
                   <div className="p-4 bg-brand-orange/10 rounded-full">
                     <CheckCircle2 size={48} />
                   </div>
-
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest mb-1">
                       ID Verified
                     </p>
-                    <p className="font-mono text-sm break-all">
-                      {qrCode}
-                    </p>
+                    <p className="font-mono text-sm break-all">{qrCode}</p>
                   </div>
-
                   <button
                     onClick={resetApp}
                     className="mt-2 text-[10px] uppercase tracking-widest font-bold hover:underline"
@@ -172,9 +165,7 @@ export default function App() {
 
             <button
               onClick={() => {
-                if (step === 'scan') {
-                  handleScanSuccess('MANUAL-NODE-01');
-                }
+                if (step === 'scan') handleScanSuccess('MANUAL-NODE-01');
               }}
               className="w-full py-3 bg-bg-card hover:bg-border-bright text-xs font-bold uppercase tracking-[0.2em] transition-colors rounded-md border border-border-bright"
             >
@@ -182,11 +173,10 @@ export default function App() {
             </button>
           </section>
 
-          <section className="flex-1 bg-bg-app border border-border-dim rounded-xl p-5 overflow-hidden flex flex-col shadow-xl">
+          <section className="flex-1 bg-bg-app border border-border-dim rounded-xl p-5 md:overflow-hidden flex flex-col shadow-xl">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-text-dim mb-4">
               Last Scanned
             </h2>
-
             <div className="space-y-3 overflow-y-auto custom-scrollbar flex-1">
               {history.length > 0 ? (
                 history.map((item, i) => (
@@ -198,11 +188,8 @@ export default function App() {
                       <span className="text-xs font-mono text-brand-orange tracking-tighter truncate max-w-[120px]">
                         {item.qrCode}
                       </span>
-                      <span className="text-[10px] text-text-dim">
-                        {item.timestamp}
-                      </span>
+                      <span className="text-[10px] text-text-dim">{item.timestamp}</span>
                     </div>
-
                     <span className="text-[10px] bg-brand-orange/10 text-brand-orange px-2 py-1 rounded font-bold uppercase">
                       Logged
                     </span>
@@ -220,7 +207,7 @@ export default function App() {
         </div>
 
         {/* Right Column: Audit Form */}
-        <div className="md:col-span-8 bg-bg-app border border-border-dim rounded-xl flex flex-col shadow-2xl overflow-hidden">
+        <div className="md:col-span-8 bg-bg-app border border-border-dim rounded-xl flex flex-col shadow-2xl md:overflow-hidden">
           <div className="p-6 border-b border-border-dim flex items-center justify-between bg-bg-header/50">
             <div>
               <h2 className="text-xl font-light text-white tracking-tight">
@@ -230,7 +217,6 @@ export default function App() {
                 Select items with quantity mismatch or damage.
               </p>
             </div>
-
             <div className="flex gap-4">
               <button
                 onClick={resetApp}
@@ -238,7 +224,6 @@ export default function App() {
               >
                 Reset
               </button>
-
               <button
                 onClick={handleSubmit}
                 disabled={selectedItems.length === 0 || step === 'scan'}
@@ -249,23 +234,23 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex-1 p-6 overflow-hidden relative">
+          {/* FIX: Changed overflow-hidden → overflow-y-auto + custom-scrollbar.
+              The old overflow-hidden was clipping the checklist grid, making it
+              impossible to scroll to items below the fold. The relative
+              positioning for the "Scanner Required" overlay is preserved. */}
+          <div className="flex-1 p-6 overflow-y-auto custom-scrollbar relative">
             <AnimatePresence mode="wait">
               {step === 'success' ? (
                 <motion.div
                   key="success-message"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="h-full flex flex-col items-center justify-center text-center p-8 bg-bg-main/50 border border-brand-orange/20 rounded-xl"
+                  className="min-h-full flex flex-col items-center justify-center text-center p-8 bg-bg-main/50 border border-brand-orange/20 rounded-xl"
                 >
                   <div className="p-4 bg-brand-orange/10 rounded-full mb-6 text-brand-orange">
                     <Send size={48} />
                   </div>
-
-                  <h2 className="text-2xl font-bold mb-2">
-                    Protocol Recorded
-                  </h2>
-
+                  <h2 className="text-2xl font-bold mb-2">Protocol Recorded</h2>
                   <p className="text-text-dim text-sm max-w-xs mb-8">
                     Audit log{' '}
                     <span className="text-white font-mono">
@@ -273,7 +258,6 @@ export default function App() {
                     </span>{' '}
                     has been synchronized with the central repository.
                   </p>
-
                   <button
                     onClick={resetApp}
                     className="px-10 py-3 bg-brand-orange text-black font-bold uppercase tracking-widest text-xs rounded hover:bg-brand-orange/90 shadow-xl"
@@ -286,7 +270,6 @@ export default function App() {
                   key="checklist-view"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="h-full"
                 >
                   <DiscrepancyChecklist
                     selectedItems={selectedItems}
@@ -300,11 +283,7 @@ export default function App() {
                           size={32}
                           className="mx-auto mb-4 text-brand-orange animate-pulse"
                         />
-
-                        <h3 className="text-lg font-bold mb-2">
-                          Scanner Required
-                        </h3>
-
+                        <h3 className="text-lg font-bold mb-2">Scanner Required</h3>
                         <p className="text-xs text-text-dim uppercase tracking-widest leading-loose">
                           Please verify your workstation or pallet ID using the
                           scanner in the left panel to unlock the checklist.
@@ -326,21 +305,13 @@ export default function App() {
             <span className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></span>
             Relay Status: Linked
           </span>
-
-          <span>
-            DB Sync: <span className="text-white">Active</span>
-          </span>
+          <span>DB Sync: <span className="text-white">Active</span></span>
         </div>
-
         <div className="flex gap-6">
           <span className="hidden sm:inline">
             WH_NODE: <span className="text-white">SE-42-DIST</span>
           </span>
-
-          <span>
-            Battery: <span className="text-white">88%</span>
-          </span>
-
+          <span>Battery: <span className="text-white">88%</span></span>
           <span className="text-[8px] opacity-40">
             UTC: {new Date().toISOString().replace('T', ' ').slice(0, 19)}
           </span>
