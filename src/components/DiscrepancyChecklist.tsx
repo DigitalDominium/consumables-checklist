@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { CircleCheck, Circle } from 'lucide-react';
+import React from 'react';
 
 export const CONSUMABLE_ITEMS = [
   "Handle with Care Sticker",
@@ -77,9 +76,9 @@ const DiscrepancyChecklist: React.FC<DiscrepancyChecklistProps> = ({ selectedIte
     const isSelected = selectedItems.includes(item);
     return (
       <label key={item} className="flex items-center group cursor-pointer">
-        <input 
-          type="checkbox" 
-          className="peer hidden" 
+        <input
+          type="checkbox"
+          className="peer hidden"
           checked={isSelected}
           onChange={() => toggleItem(item)}
         />
@@ -94,7 +93,11 @@ const DiscrepancyChecklist: React.FC<DiscrepancyChecklistProps> = ({ selectedIte
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6 overflow-y-auto pr-4 custom-scrollbar h-full">
+    // FIX: Removed `h-full` — it was trying to fill the parent's height but
+    // the parent had `overflow-hidden`, causing the scrollable area to be
+    // clipped and unreachable. Now the grid grows naturally and the
+    // scrollable container in App.tsx handles overflow.
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
       <ChecklistCategory title="Adhesives & Tape">
         {CONSUMABLE_ITEMS.slice(2, 4).map(renderItem)}
         {CONSUMABLE_ITEMS.slice(17, 18).map(renderItem)}
