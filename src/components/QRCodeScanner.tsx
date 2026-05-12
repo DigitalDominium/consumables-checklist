@@ -1,86 +1,155 @@
-import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode } from "html5-qrcode";
-import { Camera } from "lucide-react";
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Html5Qrcode,
+  Html5QrcodeScannerState,
+  Html5QrcodeSupportedFormats,
+} from 'html5-qrcode';
+import { Camera, AlertTriangle } from 'lucide-react';
 
-type QRCodeScannerProps = {
+interface QRCodeScannerProps {
   onScan: (data: string) => void;
-};
+}
 
 export default function QRCodeScanner({ onScan }: QRCodeScannerProps) {
+  const scannerIdRef = useRef(
+    `qr-reader-${Math.random().toString(36).substring(2, 10)}`
+  );
+
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const hasStartedRef = useRef(false);
-  const [status, setStatus] = useState("Starting camera...");
+  const scannedRef = useRef(false);
+
+  const [error, setError] = useState<string>('');
+  const [isStarting, setIsStarting] = useState(true);
 
   useEffect(() => {
-    const startScanner = async () => {
-      if (hasStartedRef.current) return;
-      hasStartedRef.current = true;
+    let isMounted = true;
 
+    const startScanner = async () => {
       try {
-        const scanner = new Html5Qrcode("qr-reader");
+        setError('');
+        setIsStarting(true);
+
+        const scanner = new Html5Qrcode(scannerIdRef.current, {
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+          verbose: false,
+        });
+
         scannerRef.current = scanner;
 
         await scanner.start(
-          { facingMode: "environment" },
+          { facingMode: 'environment' },
           {
             fps: 10,
             qrbox: {
-              width: 250,
-              height: 250,
+              width: 220,
+              height: 220,
             },
+            aspectRatio: 1.0,
           },
-          async (decodedText: string) => {
-            setStatus("QR scanned successfully");
+          async (decodedText) => {
+            if (scannedRef.current) return;
+
+            scannedRef.current = true;
 
             try {
-              await scanner.stop();
-              await scanner.clear();
+              const state = scanner.getState();
+
+              if (
+                state === Html5QrcodeScannerState.SCANNING ||
+                state === Html5QrcodeScannerState.PAUSED
+              ) {
+                await scanner.stop();
+              }
             } catch {
-              // Ignore cleanup errors
+              // Ignore scanner stop errors
             }
 
-            onScan(decodedText);
+            if (isMounted && decodedText.trim()) {
+              onScan(decodedText.trim());
+            }
           },
           () => {
-            // Ignore normal scan misses
+            // Ignore normal scan failure frames
           }
         );
 
-        setStatus("Point camera at the QR code");
-      } catch (error) {
-        console.error(error);
-        setStatus("Camera failed. Refresh page and allow camera permission.");
+        if (isMounted) {
+          setIsStarting(false);
+        }
+      } catch (err) {
+        console.error('QR scanner error:', err);
+
+        if (isMounted) {
+          setError(
+            'Unable to start camera. Please allow camera permission or use manual entry.'
+          );
+          setIsStarting(false);
+        }
       }
     };
 
     startScanner();
 
     return () => {
+      isMounted = false;
+
       const scanner = scannerRef.current;
 
       if (scanner) {
-        scanner
-          .stop()
-          .then(() => scanner.clear())
-          .catch(() => {});
+        try {
+          const state = scanner.getState();
+
+          if (
+            state === Html5QrcodeScannerState.SCANNING ||
+            state === Html5QrcodeScannerState.PAUSED
+          ) {
+            scanner.stop().catch(() => {});
+          }
+        } catch {
+          // Ignore cleanup errors
+        }
+
+        try {
+          scanner.clear();
+        } catch {
+          // Ignore clear errors
+        }
       }
+
+      scannerRef.current = null;
     };
   }, [onScan]);
 
   return (
-    <div className="w-full">
-      <div className="aspect-square bg-black rounded-lg overflow-hidden border border-border-bright flex items-center justify-center relative">
-        <div id="qr-reader" className="w-full h-full"></div>
+    <div className="aspect-square bg-bg-main border border-border-bright rounded-lg overflow-hidden relative flex items-center justify-center">
+      <div
+        id={scannerIdRef.current}
+        className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover"
+      />
 
-        <div className="absolute top-3 left-3 bg-black/70 text-white text-[10px] uppercase tracking-widest px-3 py-1 rounded flex items-center gap-2">
-          <Camera size={12} />
-          Live Camera
+      {isStarting && !error && (
+        <div className="absolute inset-0 bg-bg-main/80 flex flex-col items-center justify-center text-center p-4">
+          <Camera size={32} className="text-brand-orange mb-3 animate-pulse" />
+          <p className="text-xs text-text-dim uppercase tracking-widest">
+            Starting camera...
+          </p>
         </div>
-      </div>
+      )}
 
-      <p className="text-[10px] text-text-dim uppercase tracking-widest text-center mt-3">
-        {status}
-      </p>
+      {error && (
+        <div className="absolute inset-0 bg-bg-main/90 flex flex-col items-center justify-center text-center p-4">
+          <AlertTriangle size={32} className="text-brand-orange mb-3" />
+          <p className="text-xs text-text-dim leading-relaxed">
+            {error}
+          </p>
+        </div>
+      )}
+
+      {!error && (
+        <div className="absolute inset-0 pointer-events-none border-2 border-brand-orange/40 rounded-lg">
+          <div className="absolute top-1/2 left-1/2 w-[220px] h-[220px] -translate-x-1/2 -translate-y-1/2 border-2 border-brand-orange rounded-md shadow-[0_0_20px_rgba(255,132,0,0.25)]" />
+        </div>
+      )}
     </div>
   );
 }
