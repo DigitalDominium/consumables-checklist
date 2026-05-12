@@ -40,36 +40,37 @@ export default function QRCodeScanner({ onScan }: QRCodeScannerProps) {
           { facingMode: 'environment' },
           {
             fps: 10,
-            qrbox: {
-              width: 220,
-              height: 220,
-            },
+            qrbox: { width: 220, height: 220 },
             aspectRatio: 1.0,
           },
           async (decodedText) => {
-            if (scannedRef.current) return;
-
+            // Guard: only fire once
+            if (scannedRef.current || !isMounted) return;
             scannedRef.current = true;
 
+            // FIX: fully stop + clear BEFORE calling onScan so the video
+            // element is destroyed before React unmounts the component.
+            // This prevents the camera feed from bleeding through during
+            // the AnimatePresence exit animation.
             try {
               const state = scanner.getState();
-
               if (
                 state === Html5QrcodeScannerState.SCANNING ||
                 state === Html5QrcodeScannerState.PAUSED
               ) {
                 await scanner.stop();
               }
+              scanner.clear();
             } catch {
-              // Ignore scanner stop errors
+              // Ignore stop/clear errors — proceed regardless
             }
 
-            if (isMounted && decodedText.trim()) {
+            if (decodedText.trim()) {
               onScan(decodedText.trim());
             }
           },
           () => {
-            // Ignore normal scan failure frames
+            // Ignore per-frame scan failures (normal while scanning)
           }
         );
 
@@ -78,7 +79,6 @@ export default function QRCodeScanner({ onScan }: QRCodeScannerProps) {
         }
       } catch (err) {
         console.error('QR scanner error:', err);
-
         if (isMounted) {
           setError(
             'Unable to start camera. Please allow camera permission or use manual entry.'
@@ -90,32 +90,22 @@ export default function QRCodeScanner({ onScan }: QRCodeScannerProps) {
 
     startScanner();
 
+    // Cleanup on unmount
     return () => {
       isMounted = false;
-
       const scanner = scannerRef.current;
-
       if (scanner) {
         try {
           const state = scanner.getState();
-
           if (
             state === Html5QrcodeScannerState.SCANNING ||
             state === Html5QrcodeScannerState.PAUSED
           ) {
             scanner.stop().catch(() => {});
           }
-        } catch {
-          // Ignore cleanup errors
-        }
-
-        try {
-          scanner.clear();
-        } catch {
-          // Ignore clear errors
-        }
+        } catch { /* ignore */ }
+        try { scanner.clear(); } catch { /* ignore */ }
       }
-
       scannerRef.current = null;
     };
   }, [onScan]);
@@ -139,9 +129,7 @@ export default function QRCodeScanner({ onScan }: QRCodeScannerProps) {
       {error && (
         <div className="absolute inset-0 bg-bg-main/90 flex flex-col items-center justify-center text-center p-4">
           <AlertTriangle size={32} className="text-brand-orange mb-3" />
-          <p className="text-xs text-text-dim leading-relaxed">
-            {error}
-          </p>
+          <p className="text-xs text-text-dim leading-relaxed">{error}</p>
         </div>
       )}
 
