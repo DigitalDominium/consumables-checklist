@@ -33,4 +33,30 @@
     background: #3E4248;
   }
 }
+#qr-reader {
+  width: 100% !important;
+  height: 100% !important;
+}
 
+#qr-reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+#qr-reader__dashboard_section {
+  display: none !important;
+}
+
+#qr-reader__scan_region {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#qr-reader__scan_region video {
+  width: 100% !important;
+  height: 100% !important;
+}
